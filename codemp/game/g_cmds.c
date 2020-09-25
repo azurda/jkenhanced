@@ -35,7 +35,7 @@ void WP_SetSaber( int entNum, saberInfo_t *sabers, int saberNum, const char *sab
 
 void Cmd_NPC_f( gentity_t *ent );
 void SetTeamQuick(gentity_t *ent, int team, qboolean doBegin);
-
+void JKE_remap( gentity_t *ent );
 /*
 ==================
 DeathmatchScoreboardMessage
@@ -3425,6 +3425,7 @@ command_t commands[] = {
 	{ "voice_cmd",			Cmd_VoiceCommand_f,			CMD_NOINTERMISSION },
 	{ "vote",				Cmd_Vote_f,					CMD_NOINTERMISSION },
 	{ "where",				Cmd_Where_f,				CMD_NOINTERMISSION },
+	{ "amremap",				JKE_remap,			0},
 };
 static const size_t numCommands = ARRAY_LEN( commands );
 
@@ -3478,4 +3479,22 @@ void ClientCommand( int clientNum ) {
 
 	else
 		command->func( ent );
+}
+
+void JKE_remap( gentity_t *ent )
+{
+	char arg1[128] = {};
+	char arg2[128] = {};
+
+	if ( trap->Argc() < 2 )
+	{
+		trap->SendServerCommand( -1, va("print \"^3Syntax: \\amremap <from> <to>\n\"") );
+		return;
+	}
+
+	trap->Argv(1, arg1, sizeof(arg1));
+	trap->Argv(2, arg2, sizeof(arg2));
+
+	AddRemap(arg1, arg2, level.time);
+	trap->SetConfigstring(CS_SHADERSTATE, BuildShaderStateConfig());
 }
