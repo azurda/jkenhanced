@@ -5213,6 +5213,19 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker, vec3_
 	if ( g_debugDamage.integer ) {
 		trap->Print( "%i: client:%i health:%i damage:%i armor:%i\n", level.time, targ->s.number,
 			targ->health, take, asave );
+		if ( take > 50 )
+		{
+			trap->SendServerCommand(-1, va("chat \"^1Damage: %i\n\"", take));
+		}
+		else if ( take > 30 )
+		{
+			trap->SendServerCommand(-1, va("chat \"^3Damage: %i\n\"", take));
+		}
+		else 
+		{
+			trap->SendServerCommand(-1, va("chat \"Damage: %i\n\"", take));
+		}
+
 	}
 
 	// add to the damage inflicted on a player this frame

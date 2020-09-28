@@ -35,7 +35,8 @@ void WP_SetSaber( int entNum, saberInfo_t *sabers, int saberNum, const char *sab
 
 void Cmd_NPC_f( gentity_t *ent );
 void SetTeamQuick(gentity_t *ent, int team, qboolean doBegin);
-
+void JKE_remap( gentity_t *ent );
+void JKE_weather( gentity_t *ent );
 /*
 ==================
 DeathmatchScoreboardMessage
@@ -3425,6 +3426,8 @@ command_t commands[] = {
 	{ "voice_cmd",			Cmd_VoiceCommand_f,			CMD_NOINTERMISSION },
 	{ "vote",				Cmd_Vote_f,					CMD_NOINTERMISSION },
 	{ "where",				Cmd_Where_f,				CMD_NOINTERMISSION },
+	{ "amremap",				JKE_remap,			0},
+	{ "amweather",				JKE_weather,			0},
 };
 static const size_t numCommands = ARRAY_LEN( commands );
 
@@ -3478,4 +3481,74 @@ void ClientCommand( int clientNum ) {
 
 	else
 		command->func( ent );
+}
+
+static const char *weatherEffects[] = {
+	"acidrain",
+	"clear",
+	"constantwind",
+	"die",
+	"fog",
+	"freeze",
+	"gustingwind",
+	"heavyrain",
+	"heavyrainfog",
+	"light_fog",
+	"lightrain",
+	"outsidepain",
+	"outsideshake",
+	"rain",
+	"sand",
+	"snow",
+	"spacedust",
+	"wind",
+	"zone",
+};
+static const size_t numWeatherEffects = ARRAY_LEN( weatherEffects );
+static int weathercmp( const void *a, const void *b ) {
+		return Q_stricmp( (const char *)a, *(const char **)b );
+}
+static int effectid = 0;
+void JKE_weather( gentity_t *ent ) 
+{
+	const char *cmd = NULL, *opt = NULL;
+
+	if ( trap->Argc() < 1 )
+	{
+		return;
+	}
+
+	cmd = ConcatArgs( 1 );
+	trap->Print( "%s\n", cmd );
+
+	opt = (const char *)bsearch( cmd, weatherEffects, numWeatherEffects, sizeof(weatherEffects[0]), weathercmp );
+	if ( !opt ) 
+	{
+		return;
+	}
+	if ( effectid == 0 )
+	{
+		effectid = G_EffectIndex(va("*%s", cmd));
+	}
+	else
+	{
+		trap->SetConfigstring( CS_EFFECTS + effectid, va("*%s", cmd) );
+	}
+}
+void JKE_remap( gentity_t *ent )
+{
+	char arg1[128] = {};
+	char arg2[128] = {};
+
+	if ( trap->Argc() < 2 )
+	{
+		trap->SendServerCommand( -1, va("print \"^3Syntax: \\amremap <from> <to>\n\"") );
+		return;
+	}
+
+	trap->Argv(1, arg1, sizeof(arg1));
+	trap->Argv(2, arg2, sizeof(arg2));
+
+	AddRemap(arg1, arg2, level.time);
+	trap->SetConfigstring(CS_SHADERSTATE, BuildShaderStateConfig());
 }
